@@ -40,7 +40,7 @@ export function printScene(scene) {
 
   const doc = iframe.contentDocument
   doc.open()
-  doc.write(`<!doctype html><html><head><title>Dotted paper</title><style>
+  doc.write(`<!doctype html><html><head><title>Dotted</title><style>
     @page { size: ${W}mm ${H}mm; margin: 0 }
     html, body { margin: 0; padding: 0 }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact }

@@ -1,4 +1,4 @@
-# Dotted Paper Generator
+# Dotted
 
 Make your own printable dotted, lined or graph paper. Pick a paper size, pattern, spacing and colors, then print it or export it to PDF or PNG. Everything runs in your browser: no sign-up, no server, no tracking.
 

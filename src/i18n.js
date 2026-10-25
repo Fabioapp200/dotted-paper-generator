@@ -1,6 +1,6 @@
 const MESSAGES = {
   'en-US': {
-    appTitle: 'Dotted Paper Generator',
+    appTitle: 'Dotted',
     tagline: 'Printable dotted, lined and graph paper',
     language: 'Language',
     themeToDark: 'Switch to dark mode',
@@ -137,7 +137,7 @@ const MESSAGES = {
   },
 
   'pt-BR': {
-    appTitle: 'Gerador de Papel Pontilhado',
+    appTitle: 'Dotted',
     tagline: 'Papel pontilhado, pautado e quadriculado para impressão',
     language: 'Idioma',
     themeToDark: 'Mudar para o modo escuro',
