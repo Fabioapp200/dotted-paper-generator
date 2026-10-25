@@ -8,9 +8,14 @@ export const DEFAULTS = Object.freeze({
   sheet: 'none',
   sheetMarks: 'ticks',
   mirrorGutter: true,
-  // Dots
+  // Pattern: 'dots' | 'lines' (ruled) | 'grid' (graph paper)
+  pattern: 'dots',
   shape: 'round',
   dotSize: 0.6,
+  lineWidth: 0.15,
+  lineStyle: 'solid',
+  marginLine: false,
+  marginLineColor: '#ef4444',
   opacity: 1,
   majorEvery: 0,
   majorScale: 1.8,

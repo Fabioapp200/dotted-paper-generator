@@ -1,6 +1,6 @@
 # Dotted Paper Generator
 
-Make your own printable dot-grid paper. Pick a paper size, dot shape, spacing and colors, then print it or export it to PDF or PNG. Everything runs in your browser: no sign-up, no server, no tracking.
+Make your own printable dotted, lined or graph paper. Pick a paper size, pattern, spacing and colors, then print it or export it to PDF or PNG. Everything runs in your browser: no sign-up, no server, no tracking.
 
 **Try it:** [dotted.rfcstudios.com.br](https://dotted.rfcstudios.com.br)
 
@@ -11,14 +11,16 @@ Make your own printable dot-grid paper. Pick a paper size, dot shape, spacing an
 
 ## Why?
 
-Dot-grid notebooks are great for bullet journals, sketching, lettering and planning, but store-bought ones never have quite the right spacing, dot size or margins. This app lets you make exactly the page you want and print as many as you like, including small booklets folded from regular A4 or Letter paper.
+Dot-grid, lined and graph notebooks are great for bullet journals, sketching, lettering, notes and planning, but store-bought ones never have quite the right spacing, line weight or margins. This app lets you make exactly the page you want and print as many as you like, including small booklets folded from regular A4 or Letter paper.
 
 ## Features
 
 - 📄 **Many paper sizes:** A3–A6, B4–B6, US Letter, Legal, Tabloid, Half Letter, Executive, Traveler's Notebook, or any custom size. Portrait or landscape.
+- 🔲 **Three patterns:** dots, ruled lines (with an optional notebook-style margin line) and graph paper.
 - ⚫ **Four dot shapes:** round, square, diamond and hexagon, with adjustable size and opacity.
+- ✏️ **Line options:** line weight and solid, dashed or dotted lines for lined and graph paper.
 - 📏 **Flexible spacing:** the same spacing on both axes by default, or separate horizontal and vertical spacing.
-- ✨ **Emphasized dots:** make every Nth dot bigger to mark out a larger grid.
+- ✨ **Emphasis:** make every Nth dot bigger, or every Nth line thicker, to mark out a larger grid.
 - 🖨️ **Print-shop helpers:** margins, a binding gutter, bleed, crop marks, and on-screen guides for the trim, bleed and margins.
 - 📚 **Booklets:** print several pages on one sheet (for example two A5 pages on landscape A4) with cut/fold marks and the gutter on the fold side.
 - 🎨 **Colors:** black by default, any solid color, or a linear or radial gradient. The paper color is adjustable too.
@@ -32,6 +34,10 @@ Dot-grid notebooks are great for bullet journals, sketching, lettering and plann
 | Dark mode, hexagon dots, gradient and emphasized dots | Two A5 booklet pages on one A4 sheet |
 | --- | --- |
 | ![Dark mode with purple-to-pink hexagon dots and every fifth dot larger](docs/screenshots/app-dark.png) | ![Two A5 pages side by side on landscape A4 with a fold line between them](docs/screenshots/booklet.png) |
+
+| Lined paper with a margin line | Graph paper with every 5th line thicker |
+| --- | --- |
+| ![Lined A4 page with gray lines and a red vertical margin line](docs/screenshots/lined.png) | ![Dark mode with a blue graph-paper grid and thicker major lines](docs/screenshots/graph.png) |
 
 | In Portuguese, with bleed and crop marks |
 | --- |
@@ -52,22 +58,26 @@ All measurements are in millimetres.
 | Gutter on the fold side | Shown when pages sit side by side: puts each page's binding gutter on the edge next to the fold. | On |
 | Paper color | Background color of the page. | White |
 
-### Dots
+### Pattern
 
 | Option | What it does | Default |
 | --- | --- | --- |
-| Shape | Round, square, diamond or hexagon. | Round |
-| Dot size | Width of each dot. | 0.6 mm |
-| Opacity | How strong the dots are. Lower values give a subtle grid. | 100% |
-| Emphasize every Nth dot | Makes every Nth dot (in both directions) bigger. 0 turns it off. | 0 |
-| Emphasis size | How much bigger emphasized dots are. | 1.8× |
+| Pattern type | **Dots**, **Lines** (ruled paper) or **Graph** (a square grid). | Dots |
+| Shape | Dots only: round, square, diamond or hexagon. | Round |
+| Dot size | Dots only: width of each dot. | 0.6 mm |
+| Line weight | Lines and graph: thickness of each line. | 0.15 mm |
+| Line style | Lines and graph: solid, dashed or dotted. | Solid |
+| Vertical margin line | Lines only: a notebook-style line down the left margin, in its own color. | Off (red) |
+| Opacity | How strong the pattern is. Lower values give a subtle grid. | 100% |
+| Emphasize every Nth dot / line | Makes every Nth dot bigger or every Nth line thicker. 0 turns it off. | 0 |
+| Emphasis size | How much bigger or thicker emphasized dots or lines are. | 1.8× |
 
 ### Spacing
 
 | Option | What it does | Default |
 | --- | --- | --- |
 | Same spacing for X and Y | Link or unlink horizontal and vertical spacing. | Linked |
-| Spacing / Horizontal / Vertical | Distance between dot centers. | 5 mm |
+| Spacing / Horizontal / Vertical | Distance between dots or grid lines. For lined paper there's a single **Line spacing** (wide ruled ≈ 8.7 mm, college ruled ≈ 7.1 mm). | 5 mm |
 | Grid alignment | **Centered** spreads leftover space evenly around the grid. **Top-left** starts the grid right at the margin. | Centered |
 
 ### Margins & printing
@@ -77,7 +87,7 @@ All measurements are in millimetres.
 | Margin | One margin for all sides, or unlink to set top, right, bottom and left separately. | 10 mm |
 | Binding gutter | Extra space on the left edge (or the fold side for booklets) for binding or hole punching. | 0 mm |
 | Bleed | Extends the page past the trim line, for print shops. 3 mm is common. | 0 mm |
-| Extend dots into the bleed | Fills the whole page, ignoring margins. | Off |
+| Extend the pattern into the bleed | Fills the whole page, ignoring margins. | Off |
 | Crop marks | Adds trim marks in the corners. | Off |
 | Show guides in preview | Shows the trim (gray), bleed (red) and margin (cyan) guides. They never appear in prints or exports. | On |
 
@@ -86,7 +96,7 @@ All measurements are in millimetres.
 | Option | What it does | Default |
 | --- | --- | --- |
 | Fill | Solid, linear gradient or radial gradient. | Solid |
-| Dot color / Start color | The dot color, or where the gradient starts. | Black |
+| Dot color / Line color / Start color | The pattern color, or where the gradient starts. | Black |
 | End color | Where the gradient ends. | Indigo |
 | Angle | Direction of a linear gradient (0° left to right, 90° top to bottom). | 90° |
 
@@ -186,7 +196,7 @@ Ideas, bug reports and pull requests are welcome. Some things that would be nice
 
 - More languages. Add a block to `src/i18n.js`.
 - More paper sizes. Add them to `src/papers.js`.
-- Other grid types (lined, square grid, isometric).
+- More grid types (isometric, hexagonal, music staves).
 - Inches as a unit.
 
 Since the code was mostly AI-written, a careful human review of any part of it is a contribution too.

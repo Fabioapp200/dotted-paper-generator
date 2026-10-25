@@ -169,8 +169,15 @@ function renderPreview() {
   if (scene.sheetTooSmall) parts.push(t('sheetTooSmall'))
   if (scene.empty) parts.push(t('noArea'))
   else if (scene.tooMany) parts.push(t('tooMany'))
-  else if (scene.imposition) parts.push(t('infoDotsPerPage', { cols: fmt(scene.cols, 0), rows: fmt(scene.rows, 0) }))
-  else parts.push(t('infoDots', { cols: fmt(scene.cols, 0), rows: fmt(scene.rows, 0), count: fmt(scene.cols * scene.rows, 0) }))
+  else if (scene.pattern === 'dots') {
+    const vars = { cols: fmt(scene.cols, 0), rows: fmt(scene.rows, 0), count: fmt(scene.cols * scene.rows, 0) }
+    parts.push(t(scene.imposition ? 'infoDotsPerPage' : 'infoDots', vars))
+  } else {
+    const text = scene.pattern === 'grid'
+      ? t('infoGrid', { cols: fmt(Math.max(0, scene.cols - 1), 0), rows: fmt(Math.max(0, scene.rows - 1), 0) })
+      : t('infoLines', { rows: fmt(scene.rows, 0) })
+    parts.push(text + (scene.imposition ? t('perPage') : ''))
+  }
   els.info.textContent = parts.join(' · ')
   els.info.classList.toggle('text-red-600', scene.empty || scene.tooMany || scene.sheetTooSmall)
 }

@@ -1,12 +1,16 @@
-import { renderSVG, renderCanvas, DASH } from './render.js'
-import { polygon, spacing, impose } from './scene.js'
+import { renderSVG, renderCanvas } from './render.js'
+import { polygon, spacing, impose, patternOf } from './scene.js'
+
+const FILE_PREFIX = { dots: 'dotted', lines: 'lined', grid: 'grid' }
 
 export function fileBase(s) {
+  const pattern = patternOf(s)
   const sp = spacing(s)
-  const gap = sp.x === sp.y ? `${sp.x}mm` : `${sp.x}x${sp.y}mm`
+  const gap = pattern === 'lines' || sp.x === sp.y ? `${sp.y}mm` : `${sp.x}x${sp.y}mm`
   const paper = s.paper === 'custom' ? `${s.customWidth}x${s.customHeight}mm` : s.paper
   const sheet = impose(s)?.count ? `-on-${s.sheet}` : ''
-  return `dotted-${paper}${sheet}-${s.shape}-${gap}`
+  const shape = pattern === 'dots' ? `-${s.shape}` : ''
+  return `${FILE_PREFIX[pattern]}-${paper}${sheet}${shape}-${gap}`
 }
 
 function download(blob, name) {
@@ -127,15 +131,23 @@ export async function exportPDF(scene, s) {
     }
   }
 
+  drawLines(doc, scene.strokes, scene.solid ?? '#000000')
+
   if (scene.lines.length) {
     doc.setGState(new doc.GState({ opacity: 1 }))
-    for (const l of scene.lines) {
-      doc.setDrawColor(l.color)
-      doc.setLineWidth(l.width)
-      doc.setLineDashPattern(l.dash ? DASH : [], 0)
-      doc.line(l.x1, l.y1, l.x2, l.y2)
-    }
+    drawLines(doc, scene.lines, '#000000')
   }
 
   doc.save(`${fileBase(s)}.pdf`)
+}
+
+/** Draws lines, only changing pen settings when they differ from the previous line. */
+function drawLines(doc, lines, fallback) {
+  let color, width, dash
+  for (const l of lines) {
+    if ((l.color ?? fallback) !== color) doc.setDrawColor((color = l.color ?? fallback))
+    if (l.width !== width) doc.setLineWidth((width = l.width))
+    if (l.dash !== dash) doc.setLineDashPattern((dash = l.dash) ?? [], 0)
+    doc.line(l.x1, l.y1, l.x2, l.y2)
+  }
 }

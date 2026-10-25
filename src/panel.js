@@ -1,7 +1,7 @@
 import { h, svgIcon, ICONS, toast } from './dom.js'
 import { t } from './i18n.js'
 import { PAPERS, PAPER_GROUPS, paperLabel } from './papers.js'
-import { polygon, impose } from './scene.js'
+import { polygon, impose, patternOf, PATTERNS } from './scene.js'
 import { DEFAULTS } from './state.js'
 import * as presets from './presets.js'
 
@@ -153,36 +153,56 @@ export function renderPanel(root, app) {
     )
   }
 
-  const dots = section('dots', t('sec.dots'),
-    h('div', { class: 'space-y-1' },
-      h('span', { class: 'field-label' }, t('shape')),
-      h('div', { class: 'grid grid-cols-4 gap-2', role: 'radiogroup', 'aria-label': t('shape') },
-        SHAPES.map((shape) =>
-          h('button', {
-            type: 'button', role: 'radio', id: `f-shape-${shape}`, class: 'shape-btn', 'aria-checked': String(s.shape === shape),
-            onclick: () => app.set({ shape }, { panel: true }),
-          }, h('span', { 'aria-hidden': 'true', html: shapeIcon(shape) }), h('span', { class: 'text-xs' }, t(`shape.${shape}`))),
-        ),
+  const pattern = patternOf(s)
+  const iconPicker = (key, values, icon, labelKey) =>
+    h('div', { class: `grid gap-2 ${values.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`, role: 'radiogroup', 'aria-label': t(key) },
+      values.map((value) =>
+        h('button', {
+          type: 'button', role: 'radio', id: `f-${key}-${value}`, class: 'shape-btn', 'aria-checked': String((key === 'pattern' ? pattern : s[key]) === value),
+          onclick: () => app.set({ [key]: value }, { panel: true }),
+        }, h('span', { 'aria-hidden': 'true', html: icon(value) }), h('span', { class: 'text-xs' }, t(`${labelKey}.${value}`))),
       ),
+    )
+
+  const patternSection = section('dots', t('sec.pattern'),
+    h('div', { class: 'space-y-1' },
+      h('span', { class: 'field-label' }, t('pattern')),
+      iconPicker('pattern', PATTERNS, patternIcon, 'pattern'),
     ),
-    field('dotSize', t('dotSize'), number('dotSize', { min: 0.05, max: 50, step: 0.05 })),
+    pattern === 'dots' && h('div', { class: 'space-y-1' },
+      h('span', { class: 'field-label' }, t('shape')),
+      iconPicker('shape', SHAPES, shapeIcon, 'shape'),
+    ),
+    pattern === 'dots'
+      ? field('dotSize', t('dotSize'), number('dotSize', { min: 0.05, max: 50, step: 0.05 }))
+      : h('div', { class: 'grid grid-cols-2 gap-3' },
+          field('lineWidth', t('lineWidth'), number('lineWidth', { min: 0.01, max: 5, step: 0.05 })),
+          field('lineStyle', t('lineStyle'), select('lineStyle', ['solid', 'dashed', 'dotted'].map((v) => opt(v, t(`lineStyle.${v}`))))),
+        ),
+    pattern === 'lines' && checkbox('marginLine', t('marginLine')),
+    pattern === 'lines' && s.marginLine && color('marginLineColor', t('marginLineColor')),
     field('opacity', t('opacity'), range('opacity', { min: 0.05, max: 1, step: 0.05, unit: '%', display: (v) => Math.round(v * 100) })),
     h('div', { class: 'grid grid-cols-2 gap-3' },
-      field('majorEvery', t('majorEvery'), number('majorEvery', { min: 0, max: 100, step: 1, unit: '' })),
+      field('majorEvery', t(pattern === 'dots' ? 'majorEvery' : 'majorEveryLine'), number('majorEvery', { min: 0, max: 100, step: 1, unit: '' })),
       field('majorScale', t('majorScale'), number('majorScale', { min: 0.1, max: 10, step: 0.1, unit: '×' })),
     ),
     hint(t('majorEveryHint')),
   )
 
   const sp = section('spacing', t('sec.spacing'),
-    // Linked mode reads spacingX for both axes; copying X into Y on every toggle keeps them consistent.
-    linkToggle('linkSpacing', t('linkSpacing'), (v) => ({ linkSpacing: v, spacingY: s.spacingX })),
-    s.linkSpacing
-      ? field('spacingX', t('spacing'), number('spacingX', { min: 0.5, max: 100, step: 0.5, write: (v) => ({ spacingX: v, spacingY: v }) }))
-      : h('div', { class: 'grid grid-cols-2 gap-3' },
-          field('spacingX', t('spacingX'), number('spacingX', { min: 0.5, max: 100, step: 0.5 })),
-          field('spacingY', t('spacingY'), number('spacingY', { min: 0.5, max: 100, step: 0.5 })),
-        ),
+    pattern === 'lines'
+      // Ruled lines only use vertical spacing; writing both axes keeps linked and unlinked modes in agreement.
+      ? field('spacingY', t('lineSpacing'), number('spacingY', { min: 0.5, max: 100, step: 0.1, write: (v) => ({ spacingX: v, spacingY: v }) }), t('lineSpacingHint'))
+      : [
+          // Linked mode reads spacingX for both axes; copying X into Y on every toggle keeps them consistent.
+          linkToggle('linkSpacing', t('linkSpacing'), (v) => ({ linkSpacing: v, spacingY: s.spacingX })),
+          s.linkSpacing
+            ? field('spacingX', t('spacing'), number('spacingX', { min: 0.5, max: 100, step: 0.5, write: (v) => ({ spacingX: v, spacingY: v }) }))
+            : h('div', { class: 'grid grid-cols-2 gap-3' },
+                field('spacingX', t('spacingX'), number('spacingX', { min: 0.5, max: 100, step: 0.5 })),
+                field('spacingY', t('spacingY'), number('spacingY', { min: 0.5, max: 100, step: 0.5 })),
+              ),
+        ],
     field('align', t('align'), select('align', [opt('center', t('align.center')), opt('start', t('align.start'))])),
   )
 
@@ -208,7 +228,7 @@ export function renderPanel(root, app) {
   const gradient = s.colorMode !== 'solid'
   const colors = section('color', t('sec.color'),
     field('colorMode', t('colorMode'), select('colorMode', ['solid', 'linear', 'radial'].map((m) => opt(m, t(`mode.${m}`))))),
-    color('color', gradient ? t('colorStart') : t('color')),
+    color('color', gradient ? t('colorStart') : t(pattern === 'dots' ? 'color' : 'lineColor')),
     gradient && color('colorEnd', t('colorEnd')),
     gradient && h('button', {
       type: 'button', class: 'btn btn-ghost btn-sm', id: 'f-swap',
@@ -219,7 +239,7 @@ export function renderPanel(root, app) {
     gradient && h('div', { class: 'h-3 rounded-full ring-1 ring-black/10 dark:ring-white/10', style: `background:linear-gradient(90deg, ${s.color}, ${s.colorEnd})` }),
   )
 
-  root.replaceChildren(paper, dots, sp, print, colors, presetsSection(app, section, label))
+  root.replaceChildren(paper, patternSection, sp, print, colors, presetsSection(app, section, label))
 
   if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true })
   root.scrollTop = scroll
@@ -292,6 +312,15 @@ function presetsSection(app, section, label) {
       }, svgIcon(ICONS.reset), t('reset')),
     ),
   )
+}
+
+function patternIcon(pattern) {
+  const body = {
+    dots: [6, 12, 18].flatMap((y) => [6, 12, 18].map((x) => `<circle cx="${x}" cy="${y}" r="1.6" fill="currentColor"/>`)).join(''),
+    lines: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+    grid: '<path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/>',
+  }[pattern]
+  return `<svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${body}</svg>`
 }
 
 function shapeIcon(shape) {

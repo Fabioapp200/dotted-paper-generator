@@ -3,9 +3,13 @@ import { PAPERS } from './papers.js'
 /** Space (mm) reserved outside the bleed for crop marks. */
 export const SLUG = 8
 export const MAX_DOTS = 250_000
+export const PATTERNS = ['dots', 'lines', 'grid']
 const MIN_SPACING = 0.5
+const MARK_DASH = [1.5, 1.5]
 
 const pos = (v, fallback = 0) => (Number.isFinite(v) && v >= 0 ? v : fallback)
+
+export const patternOf = (s) => (PATTERNS.includes(s.pattern) ? s.pattern : 'dots')
 
 export function trimSize(s) {
   if (s.paper === 'custom') return { w: pos(s.customWidth, 210) || 210, h: pos(s.customHeight, 297) || 297 }
@@ -66,11 +70,13 @@ export function buildScene(s) {
 function baseScene(s, width, height) {
   return {
     width, height,
+    pattern: patternOf(s),
     shape: s.shape,
     opacity: Math.min(1, pos(s.opacity, 1)),
     background: s.background,
     solid: s.colorMode === 'solid' ? s.color : null,
-    dots: [], lines: [],
+    // dots and strokes make up the pattern; lines are crop and cut/fold marks.
+    dots: [], strokes: [], lines: [],
     // Preview-only overlays.
     guides: { bleed: null, trims: [], margins: [] },
     cols: 0, rows: 0, pages: 1, imposition: null,
@@ -91,7 +97,7 @@ function singleScene(s, { w, h }) {
   if (off) scene.guides.trims.push(trim)
   scene.guides.margins.push(marginBox)
 
-  fillPages(scene, s, [s.fillBleed ? bleedBox : marginBox])
+  fillPages(scene, s, [{ trim, marginBox, area: s.fillBleed ? bleedBox : marginBox }])
   if (s.cropMarks) scene.lines = cropMarks(trim, off, Math.max(bleed, 2))
   return scene
 }
@@ -104,27 +110,27 @@ function imposedScene(s, page, imp) {
   const base = margins(s)
   // In a folded spread the inside edge of an even column is its right side.
   const mirrored = { ...base, left: base.right, right: base.left }
-  const areas = []
+  const pages = []
   for (let r = 0; r < imp.rows; r++) {
     for (let c = 0; c < imp.cols; c++) {
       const trim = { x: imp.x0 + c * page.w, y: imp.y0 + r * page.h, w: page.w, h: page.h }
       const marginBox = insetBox(trim, s.mirrorGutter && c % 2 === 0 && imp.cols > 1 ? mirrored : base)
       scene.guides.trims.push(trim)
       scene.guides.margins.push(marginBox)
-      areas.push(s.fillBleed ? trim : marginBox)
+      pages.push({ trim, marginBox, area: s.fillBleed ? trim : marginBox })
     }
   }
 
-  fillPages(scene, s, areas)
+  fillPages(scene, s, pages)
   scene.lines = sheetMarks(s.sheetMarks, imp, page, base)
   return scene
 }
 
 const insetBox = (b, m) => ({ x: b.x + m.left, y: b.y + m.top, w: b.w - m.left - m.right, h: b.h - m.top - m.bottom })
 
-/** Fills each area with the dot grid. All areas share one size, so one grid count applies. */
-function fillPages(scene, s, areas) {
-  const area = areas[0]
+/** Fills each page with the pattern. All pages share one size, so one grid count applies. */
+function fillPages(scene, s, pages) {
+  const { area } = pages[0]
   if (area.w < 0 || area.h < 0) {
     scene.empty = true
     return
@@ -132,37 +138,119 @@ function fillPages(scene, s, areas) {
   const sp = spacing(s)
   scene.cols = Math.floor(area.w / sp.x + 1e-6) + 1
   scene.rows = Math.floor(area.h / sp.y + 1e-6) + 1
-  if (scene.cols * scene.rows * areas.length > MAX_DOTS) {
+
+  if (scene.pattern === 'dots') {
+    if (scene.cols * scene.rows * pages.length > MAX_DOTS) scene.tooMany = true
+    else for (const p of pages) layoutDots(scene.dots, s, p.area, gridOf(s, p.area, sp, scene.cols, scene.rows))
+    return
+  }
+
+  // Gradients split lines into short segments; keep that bounded like the dot count.
+  const lines = scene.pattern === 'grid' ? scene.cols + scene.rows : scene.rows
+  const segments = scene.solid ? lines : lines * Math.ceil(Math.max(area.w, area.h) / 2)
+  if (segments * pages.length > MAX_DOTS) {
     scene.tooMany = true
     return
   }
-  for (const a of areas) layoutDots(scene.dots, s, a, sp, scene.cols, scene.rows)
+  for (const p of pages) layoutLines(scene.strokes, s, p, gridOf(s, p.area, sp, scene.cols, scene.rows), scene.pattern)
 }
 
-function layoutDots(out, s, area, sp, cols, rows) {
+/** Positions of the grid's columns/rows inside an area, and which of them are emphasized. */
+function gridOf(s, area, sp, cols, rows) {
   const centered = s.align === 'center'
-  const ox = centered ? (area.w - (cols - 1) * sp.x) / 2 : 0
-  const oy = centered ? (area.h - (rows - 1) * sp.y) / 2 : 0
-  const r = Math.max(0.025, pos(s.dotSize, 0.6)) / 2
-  const majorR = r * Math.max(0.1, pos(s.majorScale, 1))
+  const x0 = area.x + (centered ? (area.w - (cols - 1) * sp.x) / 2 : 0)
+  const y0 = area.y + (centered ? (area.h - (rows - 1) * sp.y) / 2 : 0)
   const every = Math.floor(pos(s.majorEvery))
-  // When centered, anchor emphasized dots on the middle dot so the pattern stays symmetric.
+  // When centered, anchor emphasis on the middle column/row so the pattern stays symmetric.
   const ci = centered ? Math.floor((cols - 1) / 2) : 0
   const cj = centered ? Math.floor((rows - 1) / 2) : 0
   const isMajor = (i, c) => every > 1 && (((i - c) % every) + every) % every === 0
+  return {
+    cols, rows,
+    x: (i) => x0 + i * sp.x,
+    y: (j) => y0 + j * sp.y,
+    majorCol: (i) => isMajor(i, ci),
+    majorRow: (j) => isMajor(j, cj),
+  }
+}
+
+function layoutDots(out, s, area, g) {
+  const r = Math.max(0.025, pos(s.dotSize, 0.6)) / 2
+  const majorR = r * Math.max(0.1, pos(s.majorScale, 1))
   const color = colorFn(s, area)
 
-  for (let j = 0; j < rows; j++) {
-    const y = area.y + oy + j * sp.y
-    const majorRow = isMajor(j, cj)
-    for (let i = 0; i < cols; i++) {
-      const x = area.x + ox + i * sp.x
+  for (let j = 0; j < g.rows; j++) {
+    const y = g.y(j)
+    const majorRow = g.majorRow(j)
+    for (let i = 0; i < g.cols; i++) {
+      const x = g.x(i)
       out.push({
         x, y,
-        r: majorRow && isMajor(i, ci) ? majorR : r,
+        r: majorRow && g.majorCol(i) ? majorR : r,
         fill: color ? color(x, y) : null,
       })
     }
+  }
+}
+
+/** Dash patterns in mm for a given line weight; solid lines have none. */
+export function lineDash(style, w) {
+  if (style === 'dashed') return [Math.max(1, w * 6), Math.max(0.6, w * 4)]
+  if (style === 'dotted') return [w, w * 2]
+  return null
+}
+
+/**
+ * Ruled lines (one per row, across the whole area) or a graph grid (closed at the
+ * outermost lines). Minor lines come first and major lines last, so renderers can
+ * batch same-weight lines and emphasized lines sit on top.
+ */
+function layoutLines(out, s, page, g, pattern) {
+  const w = Math.max(0.01, pos(s.lineWidth, 0.15))
+  const majorW = w * Math.max(0.1, pos(s.majorScale, 1))
+  const dash = lineDash(s.lineStyle, w)
+  const color = colorFn(s, page.area)
+  // Gradient lines are drawn as short segments, each in its own color.
+  // Segment length is a whole number of dash periods so dashes stay even.
+  const period = dash ? dash[0] + dash[1] : 2
+  const segLen = period * Math.max(1, Math.round(2 / period))
+
+  const add = (x1, y1, x2, y2, width) => {
+    if (!color) {
+      out.push({ x1, y1, x2, y2, width, dash, color: null })
+      return
+    }
+    const n = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / segLen))
+    for (let k = 0; k < n; k++) {
+      const a = k / n
+      const b = (k + 1) / n
+      const xa = x1 + (x2 - x1) * a
+      const ya = y1 + (y2 - y1) * a
+      const xb = x1 + (x2 - x1) * b
+      const yb = y1 + (y2 - y1) * b
+      out.push({ x1: xa, y1: ya, x2: xb, y2: yb, width, dash, color: color((xa + xb) / 2, (ya + yb) / 2) })
+    }
+  }
+
+  const { area } = page
+  for (const major of [false, true]) {
+    const width = major ? majorW : w
+    if (pattern === 'lines') {
+      for (let j = 0; j < g.rows; j++) if (g.majorRow(j) === major) add(area.x, g.y(j), area.x + area.w, g.y(j), width)
+    } else {
+      const left = g.x(0)
+      const right = g.x(g.cols - 1)
+      const top = g.y(0)
+      const bottom = g.y(g.rows - 1)
+      for (let i = 0; i < g.cols; i++) if (g.majorCol(i) === major) add(g.x(i), top, g.x(i), bottom, width)
+      for (let j = 0; j < g.rows; j++) if (g.majorRow(j) === major) add(left, g.y(j), right, g.y(j), width)
+    }
+  }
+
+  // Notebook-style vertical line at the left margin, running the full page height.
+  if (pattern === 'lines' && s.marginLine) {
+    const x = page.marginBox.x
+    out.push({ x1: x, y1: page.trim.y, x2: x, y2: page.trim.y + page.trim.h, width: w, dash: null, color: s.marginLineColor })
   }
 }
 
@@ -181,7 +269,7 @@ function cropMarks(trim, off, gap) {
 
 /**
  * Cut/fold marks on every page boundary that isn't the sheet edge.
- * Ticks run in from the sheet edge and stop short of the dots; lines cross the whole sheet.
+ * Ticks run in from the sheet edge and stop short of the pattern; lines cross the whole sheet.
  */
 function sheetMarks(style, imp, page, m) {
   if (style !== 'ticks' && style !== 'lines') return []
@@ -190,7 +278,7 @@ function sheetMarks(style, imp, page, m) {
   const ys = Array.from({ length: imp.rows + 1 }, (_, k) => imp.y0 + k * page.h).filter((y) => inner(y, imp.H))
 
   if (style === 'lines') {
-    const dashed = { color: '#999999', width: 0.15, dash: true }
+    const dashed = { color: '#999999', width: 0.15, dash: MARK_DASH }
     return [
       ...xs.map((x) => ({ ...dashed, x1: x, y1: 0, x2: x, y2: imp.H })),
       ...ys.map((y) => ({ ...dashed, x1: 0, y1: y, x2: imp.W, y2: y })),
