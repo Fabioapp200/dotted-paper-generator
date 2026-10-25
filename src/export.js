@@ -1,11 +1,12 @@
-import { renderSVG, renderCanvas } from './render.js'
-import { polygon, spacing } from './scene.js'
+import { renderSVG, renderCanvas, DASH } from './render.js'
+import { polygon, spacing, impose } from './scene.js'
 
 export function fileBase(s) {
   const sp = spacing(s)
   const gap = sp.x === sp.y ? `${sp.x}mm` : `${sp.x}x${sp.y}mm`
   const paper = s.paper === 'custom' ? `${s.customWidth}x${s.customHeight}mm` : s.paper
-  return `dotted-${paper}-${s.shape}-${gap}`
+  const sheet = impose(s)?.count ? `-on-${s.sheet}` : ''
+  return `dotted-${paper}${sheet}-${s.shape}-${gap}`
 }
 
 function download(blob, name) {
@@ -128,9 +129,12 @@ export async function exportPDF(scene, s) {
 
   if (scene.lines.length) {
     doc.setGState(new doc.GState({ opacity: 1 }))
-    doc.setDrawColor(0, 0, 0)
-    doc.setLineWidth(0.1)
-    for (const l of scene.lines) doc.line(l.x1, l.y1, l.x2, l.y2)
+    for (const l of scene.lines) {
+      doc.setDrawColor(l.color)
+      doc.setLineWidth(l.width)
+      doc.setLineDashPattern(l.dash ? DASH : [], 0)
+      doc.line(l.x1, l.y1, l.x2, l.y2)
+    }
   }
 
   doc.save(`${fileBase(s)}.pdf`)

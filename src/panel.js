@@ -1,7 +1,7 @@
 import { h, svgIcon, ICONS, toast } from './dom.js'
 import { t } from './i18n.js'
 import { PAPERS, PAPER_GROUPS, paperLabel } from './papers.js'
-import { polygon } from './scene.js'
+import { polygon, impose } from './scene.js'
 import { DEFAULTS } from './state.js'
 import * as presets from './presets.js'
 
@@ -127,8 +127,31 @@ export function renderPanel(root, app) {
           h('span', { class: 'field-label' }, t('orientation')),
           segmented('orientation', [['portrait', t('portrait')], ['landscape', t('landscape')]]),
         ),
+    sheetControls(),
     color('background', t('background')),
   )
+
+  function sheetControls() {
+    const imp = impose(s)
+    let status = null
+    if (imp && !imp.count) status = h('p', { class: 'hint text-red-600 dark:text-red-400' }, t('sheetTooSmall'))
+    else if (imp) status = hint(t('sheetFit', { n: imp.count, sheet: PAPERS[s.sheet].name ?? s.sheet, orientation: t(imp.landscape ? 'landscape' : 'portrait').toLowerCase() }))
+
+    return h('div', { class: 'space-y-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800' },
+      field('sheet', t('sheet'),
+        select('sheet', [
+          opt('none', t('sheetNone')),
+          ...PAPER_GROUPS.map(([group, ids]) => h('optgroup', { label: t(group) }, ids.map((id) => opt(id, paperLabel(id))))),
+        ]),
+        !imp && t('sheetHint'),
+      ),
+      status,
+      imp?.count > 0 && field('sheetMarks', t('sheetMarks'),
+        select('sheetMarks', ['ticks', 'lines', 'none'].map((v) => opt(v, t(`sheetMarks.${v}`)))),
+      ),
+      imp?.cols > 1 && checkbox('mirrorGutter', t('mirrorGutter')),
+    )
+  }
 
   const dots = section('dots', t('sec.dots'),
     h('div', { class: 'space-y-1' },
@@ -164,18 +187,22 @@ export function renderPanel(root, app) {
   )
 
   const sides = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft']
+  const imposing = impose(s)?.count > 0
+  const foldGutter = imposing && s.mirrorGutter && impose(s).cols > 1
   const print = section('print', t('sec.print'),
     linkToggle('linkMargins', t('linkMargins'), (v) => ({ linkMargins: v, ...Object.fromEntries(sides.map((k) => [k, s.marginTop])) })),
     s.linkMargins
       ? field('marginTop', t('margin'), number('marginTop', { max: 500, step: 1, write: (v) => Object.fromEntries(sides.map((k) => [k, v])) }))
       : h('div', { class: 'grid grid-cols-2 gap-3' }, sides.map((k) => field(k, t(k), number(k, { max: 500, step: 1 })))),
-    field('gutter', t('gutter'), number('gutter', { max: 200, step: 1 }), t('gutterHint')),
-    field('bleed', t('bleed'), number('bleed', { max: 20, step: 0.5 }), t('bleedHint')),
+    field('gutter', t('gutter'), number('gutter', { max: 200, step: 1 }), t(foldGutter ? 'gutterFoldHint' : 'gutterHint')),
+    // Bleed and crop marks apply to a single page; on a shared sheet the cut/fold marks replace them.
+    !imposing && field('bleed', t('bleed'), number('bleed', { max: 20, step: 0.5 }), t('bleedHint')),
     h('div', { class: 'space-y-2.5' },
-      checkbox('fillBleed', t('fillBleed')),
-      checkbox('cropMarks', t('cropMarks')),
+      checkbox('fillBleed', t(imposing ? 'fillPage' : 'fillBleed')),
+      !imposing && checkbox('cropMarks', t('cropMarks')),
       checkbox('showGuides', t('showGuides')),
     ),
+    imposing && hint(t('imposingHint')),
   )
 
   const gradient = s.colorMode !== 'solid'

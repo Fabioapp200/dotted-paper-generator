@@ -4,6 +4,10 @@ export const DEFAULTS = Object.freeze({
   orientation: 'portrait',
   customWidth: 210,
   customHeight: 297,
+  // Print several pages on a larger sheet ('none' or a PAPERS id).
+  sheet: 'none',
+  sheetMarks: 'ticks',
+  mirrorGutter: true,
   // Dots
   shape: 'round',
   dotSize: 0.6,

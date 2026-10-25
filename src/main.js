@@ -6,6 +6,7 @@ import { buildScene, trimSize } from './scene.js'
 import { renderSVG } from './render.js'
 import { exportPDF, exportPNG, printScene } from './export.js'
 import { renderPanel } from './panel.js'
+import { PAPERS } from './papers.js'
 
 const els = {
   header: document.getElementById('header'),
@@ -163,12 +164,15 @@ function renderPreview() {
 
   const { w, h: hgt } = trimSize(state)
   const parts = [t('infoPage', { w: fmt(w), h: fmt(hgt) })]
-  if (scene.width !== w) parts[0] += ` · ${fmt(scene.width)} × ${fmt(scene.height)} mm`
+  if (scene.imposition) parts.push(t('infoSheet', { n: scene.pages, sheet: PAPERS[state.sheet].name ?? state.sheet, w: fmt(scene.width), h: fmt(scene.height) }))
+  else if (scene.width !== w) parts[0] += ` · ${fmt(scene.width)} × ${fmt(scene.height)} mm`
+  if (scene.sheetTooSmall) parts.push(t('sheetTooSmall'))
   if (scene.empty) parts.push(t('noArea'))
   else if (scene.tooMany) parts.push(t('tooMany'))
+  else if (scene.imposition) parts.push(t('infoDotsPerPage', { cols: fmt(scene.cols, 0), rows: fmt(scene.rows, 0) }))
   else parts.push(t('infoDots', { cols: fmt(scene.cols, 0), rows: fmt(scene.rows, 0), count: fmt(scene.cols * scene.rows, 0) }))
   els.info.textContent = parts.join(' · ')
-  els.info.classList.toggle('text-red-600', scene.empty || scene.tooMany)
+  els.info.classList.toggle('text-red-600', scene.empty || scene.tooMany || scene.sheetTooSmall)
 }
 
 /** Scales the page to fit the preview area while keeping its aspect ratio. */

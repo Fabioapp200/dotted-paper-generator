@@ -2,6 +2,9 @@ import { polygon } from './scene.js'
 
 const f = (n) => +n.toFixed(3)
 
+/** Dash pattern (mm) for dashed cut/fold lines, shared by every renderer. */
+export const DASH = [1.5, 1.5]
+
 function svgDot(shape, d) {
   const fill = d.fill ? ` fill="${d.fill}"` : ''
   const pts = polygon(shape, d.x, d.y, d.r)
@@ -26,18 +29,17 @@ export function renderSVG(scene, { guides = false, transparent = false } = {}) {
   for (const d of scene.dots) out.push(svgDot(scene.shape, d))
   out.push('</g>')
 
-  if (scene.lines.length) {
-    out.push('<g stroke="#000" stroke-width="0.1" fill="none">')
-    for (const l of scene.lines) out.push(`<line x1="${f(l.x1)}" y1="${f(l.y1)}" x2="${f(l.x2)}" y2="${f(l.y2)}"/>`)
-    out.push('</g>')
+  for (const l of scene.lines) {
+    const dash = l.dash ? ` stroke-dasharray="${DASH.join(' ')}"` : ''
+    out.push(`<line x1="${f(l.x1)}" y1="${f(l.y1)}" x2="${f(l.x2)}" y2="${f(l.y2)}" stroke="${l.color}" stroke-width="${l.width}"${dash}/>`)
   }
 
   if (guides) {
     const g = 'fill="none" vector-effect="non-scaling-stroke" stroke-width="1"'
-    if (scene.bleedBox.w !== scene.trim.w) out.push(rect(scene.bleedBox, `${g} stroke="#ef4444" stroke-dasharray="2 3"`))
-    if (scene.width !== scene.trim.w) out.push(rect(scene.trim, `${g} stroke="#64748b"`))
-    if (scene.marginBox.w > 0 && scene.marginBox.h > 0)
-      out.push(rect(scene.marginBox, `${g} stroke="#06b6d4" stroke-dasharray="4 3"`))
+    const { bleed, trims, margins } = scene.guides
+    if (bleed) out.push(rect(bleed, `${g} stroke="#ef4444" stroke-dasharray="2 3"`))
+    for (const b of trims) out.push(rect(b, `${g} stroke="#64748b"`))
+    for (const b of margins) if (b.w > 0 && b.h > 0) out.push(rect(b, `${g} stroke="#06b6d4" stroke-dasharray="4 3"`))
   }
 
   out.push('</svg>')
@@ -87,14 +89,13 @@ export function renderCanvas(scene, dpi, { transparent = false } = {}) {
   }
 
   ctx.globalAlpha = 1
-  if (scene.lines.length) {
-    ctx.strokeStyle = '#000'
-    ctx.lineWidth = Math.max(0.1, 1 / k)
+  for (const l of scene.lines) {
+    ctx.strokeStyle = l.color
+    ctx.lineWidth = Math.max(l.width, 1 / k)
+    ctx.setLineDash(l.dash ? DASH : [])
     ctx.beginPath()
-    for (const l of scene.lines) {
-      ctx.moveTo(l.x1, l.y1)
-      ctx.lineTo(l.x2, l.y2)
-    }
+    ctx.moveTo(l.x1, l.y1)
+    ctx.lineTo(l.x2, l.y2)
     ctx.stroke()
   }
   return canvas
