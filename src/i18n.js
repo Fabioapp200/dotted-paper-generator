@@ -1,0 +1,242 @@
+const MESSAGES = {
+  'en-US': {
+    appTitle: 'Dotted Paper Generator',
+    tagline: 'Printable dot-grid pages',
+    language: 'Language',
+    themeToDark: 'Switch to dark mode',
+    themeToLight: 'Switch to light mode',
+
+    'sec.paper': 'Paper',
+    paperSize: 'Size',
+    'paperGroup.iso': 'ISO',
+    'paperGroup.us': 'North America',
+    'paperGroup.other': 'Other',
+    customSize: 'Custom size…',
+    width: 'Width',
+    height: 'Height',
+    orientation: 'Orientation',
+    portrait: 'Portrait',
+    landscape: 'Landscape',
+    background: 'Paper color',
+
+    'sec.dots': 'Dots',
+    shape: 'Shape',
+    'shape.round': 'Round',
+    'shape.square': 'Square',
+    'shape.diamond': 'Diamond',
+    'shape.hex': 'Hexagon',
+    dotSize: 'Dot size',
+    opacity: 'Opacity',
+    majorEvery: 'Emphasize every Nth dot',
+    majorEveryHint: '0 turns it off. Useful for marking a larger grid.',
+    majorScale: 'Emphasis size',
+
+    'sec.spacing': 'Spacing',
+    linkSpacing: 'Same spacing for X and Y',
+    spacing: 'Spacing',
+    spacingX: 'Horizontal (X)',
+    spacingY: 'Vertical (Y)',
+    align: 'Grid alignment',
+    'align.center': 'Centered in the printable area',
+    'align.start': 'Start at the top-left margin',
+
+    'sec.print': 'Margins & printing',
+    linkMargins: 'Same margin on all sides',
+    margin: 'Margin',
+    marginTop: 'Top',
+    marginRight: 'Right',
+    marginBottom: 'Bottom',
+    marginLeft: 'Left',
+    gutter: 'Binding gutter',
+    gutterHint: 'Extra space added to the left edge for binding or hole punching.',
+    bleed: 'Bleed',
+    bleedHint: 'Extends the page past the trim line. 3 mm is common for print shops.',
+    fillBleed: 'Extend dots into the bleed (ignore margins)',
+    cropMarks: 'Crop marks',
+    showGuides: 'Show guides in preview',
+
+    'sec.color': 'Color',
+    colorMode: 'Fill',
+    'mode.solid': 'Solid',
+    'mode.linear': 'Linear gradient',
+    'mode.radial': 'Radial gradient',
+    color: 'Dot color',
+    colorStart: 'Start color',
+    colorEnd: 'End color',
+    radialHint: 'Start color at the center, end color at the corners.',
+    angle: 'Angle',
+    swapColors: 'Swap colors',
+
+    'sec.presets': 'Presets',
+    presetName: 'Preset name',
+    presetPlaceholder: 'e.g. A5 journal, 5 mm',
+    savePreset: 'Save',
+    load: 'Load',
+    delete: 'Delete',
+    noPresets: 'No saved presets yet.',
+    exportJson: 'Export JSON',
+    importJson: 'Import JSON',
+    reset: 'Reset to defaults',
+    confirmDelete: 'Delete preset “{name}”?',
+    confirmReset: 'Reset all settings to their defaults?',
+    confirmOverwrite: 'A preset named “{name}” exists. Replace it?',
+    presetSaved: 'Preset “{name}” saved.',
+    presetLoaded: 'Preset “{name}” loaded.',
+    importOk: 'Imported {n} preset(s).',
+    importError: 'Could not read that file.',
+
+    print: 'Print',
+    pdf: 'PDF',
+    png: 'PNG',
+    transparentBg: 'Transparent',
+    exporting: 'Exporting…',
+    exportError: 'Export failed: {msg}',
+    pngTooLarge: 'That image would be too large. Try a lower DPI.',
+    printHint: 'Set scale to 100% / “Actual size” in the print dialog.',
+
+    infoPage: 'Page {w} × {h} mm',
+    infoDots: '{cols} × {rows} dots ({count} total)',
+    tooMany: 'Too many dots — increase the spacing.',
+    noArea: 'Margins are larger than the page.',
+    legendTrim: 'Trim',
+    legendBleed: 'Bleed',
+    legendMargin: 'Margin',
+  },
+
+  'pt-BR': {
+    appTitle: 'Gerador de Papel Pontilhado',
+    tagline: 'Páginas pontilhadas para impressão',
+    language: 'Idioma',
+    themeToDark: 'Mudar para o modo escuro',
+    themeToLight: 'Mudar para o modo claro',
+
+    'sec.paper': 'Papel',
+    paperSize: 'Tamanho',
+    'paperGroup.iso': 'ISO',
+    'paperGroup.us': 'América do Norte',
+    'paperGroup.other': 'Outros',
+    customSize: 'Tamanho personalizado…',
+    width: 'Largura',
+    height: 'Altura',
+    orientation: 'Orientação',
+    portrait: 'Retrato',
+    landscape: 'Paisagem',
+    background: 'Cor do papel',
+
+    'sec.dots': 'Pontos',
+    shape: 'Formato',
+    'shape.round': 'Redondo',
+    'shape.square': 'Quadrado',
+    'shape.diamond': 'Losango',
+    'shape.hex': 'Hexágono',
+    dotSize: 'Tamanho do ponto',
+    opacity: 'Opacidade',
+    majorEvery: 'Destacar a cada N pontos',
+    majorEveryHint: '0 desativa. Útil para marcar uma grade maior.',
+    majorScale: 'Tamanho do destaque',
+
+    'sec.spacing': 'Espaçamento',
+    linkSpacing: 'Mesmo espaçamento em X e Y',
+    spacing: 'Espaçamento',
+    spacingX: 'Horizontal (X)',
+    spacingY: 'Vertical (Y)',
+    align: 'Alinhamento da grade',
+    'align.center': 'Centralizada na área imprimível',
+    'align.start': 'A partir da margem superior esquerda',
+
+    'sec.print': 'Margens e impressão',
+    linkMargins: 'Mesma margem em todos os lados',
+    margin: 'Margem',
+    marginTop: 'Superior',
+    marginRight: 'Direita',
+    marginBottom: 'Inferior',
+    marginLeft: 'Esquerda',
+    gutter: 'Medianiz (encadernação)',
+    gutterHint: 'Espaço extra na borda esquerda para encadernação ou furos.',
+    bleed: 'Sangria',
+    bleedHint: 'Estende a página além da linha de corte. 3 mm é o padrão das gráficas.',
+    fillBleed: 'Estender pontos até a sangria (ignorar margens)',
+    cropMarks: 'Marcas de corte',
+    showGuides: 'Mostrar guias na pré-visualização',
+
+    'sec.color': 'Cor',
+    colorMode: 'Preenchimento',
+    'mode.solid': 'Sólido',
+    'mode.linear': 'Degradê linear',
+    'mode.radial': 'Degradê radial',
+    color: 'Cor dos pontos',
+    colorStart: 'Cor inicial',
+    colorEnd: 'Cor final',
+    radialHint: 'Cor inicial no centro, cor final nos cantos.',
+    angle: 'Ângulo',
+    swapColors: 'Inverter cores',
+
+    'sec.presets': 'Predefinições',
+    presetName: 'Nome da predefinição',
+    presetPlaceholder: 'ex.: Diário A5, 5 mm',
+    savePreset: 'Salvar',
+    load: 'Carregar',
+    delete: 'Excluir',
+    noPresets: 'Nenhuma predefinição salva.',
+    exportJson: 'Exportar JSON',
+    importJson: 'Importar JSON',
+    reset: 'Restaurar padrões',
+    confirmDelete: 'Excluir a predefinição “{name}”?',
+    confirmReset: 'Restaurar todas as configurações para o padrão?',
+    confirmOverwrite: 'Já existe uma predefinição “{name}”. Substituir?',
+    presetSaved: 'Predefinição “{name}” salva.',
+    presetLoaded: 'Predefinição “{name}” carregada.',
+    importOk: '{n} predefinição(ões) importada(s).',
+    importError: 'Não foi possível ler esse arquivo.',
+
+    print: 'Imprimir',
+    pdf: 'PDF',
+    png: 'PNG',
+    transparentBg: 'Transparente',
+    exporting: 'Exportando…',
+    exportError: 'Falha ao exportar: {msg}',
+    pngTooLarge: 'A imagem ficaria grande demais. Tente um DPI menor.',
+    printHint: 'Use escala 100% / “Tamanho real” na janela de impressão.',
+
+    infoPage: 'Página {w} × {h} mm',
+    infoDots: '{cols} × {rows} pontos ({count} no total)',
+    tooMany: 'Pontos demais — aumente o espaçamento.',
+    noArea: 'As margens são maiores que a página.',
+    legendTrim: 'Corte',
+    legendBleed: 'Sangria',
+    legendMargin: 'Margem',
+  },
+}
+
+export const LANGS = [
+  ['en-US', 'English (US)'],
+  ['pt-BR', 'Português (Brasil)'],
+]
+
+const KEY = 'dpg.lang'
+let lang = 'en-US'
+try {
+  const saved = localStorage.getItem(KEY)
+  if (saved in MESSAGES) lang = saved
+} catch {}
+document.documentElement.lang = lang
+
+export const getLang = () => lang
+
+export function setLang(next) {
+  if (!(next in MESSAGES)) return
+  lang = next
+  document.documentElement.lang = next
+  try {
+    localStorage.setItem(KEY, next)
+  } catch {}
+}
+
+export function t(key, vars) {
+  let msg = MESSAGES[lang][key] ?? MESSAGES['en-US'][key] ?? key
+  if (vars) for (const [k, v] of Object.entries(vars)) msg = msg.replaceAll(`{${k}}`, v)
+  return msg
+}
+
+/** Locale-aware number formatting for the info bar. */
+export const fmt = (n, digits = 1) => n.toLocaleString(lang, { maximumFractionDigits: digits })

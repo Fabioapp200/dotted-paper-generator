@@ -1,0 +1,23 @@
+services:
+  # Dev server with hot reload: http://localhost:5173
+  dev:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      # File events don't cross Windows/macOS bind mounts reliably.
+      VITE_POLL: "true"
+
+  # Production build behind nginx: docker compose --profile prod up web
+  web:
+    profiles: ["prod"]
+    build:
+      context: .
+      target: prod
+    ports:
+      - "8080:80"

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dotted Paper Generator</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='%234f46e5'%3E%3Ccircle cx='4' cy='4' r='1.6'/%3E%3Ccircle cx='12' cy='4' r='1.6'/%3E%3Ccircle cx='4' cy='12' r='1.6'/%3E%3Ccircle cx='12' cy='12' r='1.6'/%3E%3C/g%3E%3C/svg%3E" />
+    <script>
+      // Apply the theme before first paint to avoid a flash.
+      try {
+        const saved = localStorage.getItem('dpg.theme')
+        const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.classList.toggle('dark', dark)
+      } catch {}
+    </script>
+  </head>
+  <body class="bg-zinc-100 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div id="app" class="flex min-h-screen flex-col lg:h-screen">
+      <header id="header" class="flex flex-wrap items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900"></header>
+      <main class="flex flex-1 flex-col lg:min-h-0 lg:flex-row">
+        <aside id="panel" class="w-full shrink-0 border-zinc-200 bg-white lg:w-[380px] lg:overflow-y-auto lg:border-r dark:border-zinc-800 dark:bg-zinc-900"></aside>
+        <section class="order-first flex flex-1 flex-col lg:order-none lg:min-h-0">
+          <div id="toolbar" class="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white/70 px-4 py-2 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70"></div>
+          <div id="preview" class="relative flex flex-1 items-center justify-center overflow-hidden p-6"></div>
+          <div id="info" class="border-t border-zinc-200 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"></div>
+        </section>
+      </main>
+    </div>
+    <div id="toasts" class="pointer-events-none fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-2"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
